@@ -1,0 +1,353 @@
+[
+  {
+    "title": "Shoes Adidas Stan Smith Fairway M20324",
+    "price": 83.0,
+    "description": "Adidas Stan Smith Fairway M20324 shoes are the perfect combination of classic and modern style. With sophisticated design, high-quality leather, and white as the main color, these shoes bring luxury and elegance. The outstanding features are the anti-slip rubber sole and soft lining, creating a comfortable feeling all day long. This will definitely be an ideal choice for those who love simple yet classy fashion style.",
+    "brandId": 1,
+    "categoryId": 1,
+    "variants": [
+      {
+        "size": "37",
+        "stock": 100,
+        "sku": "STAN01"
+      },
+      {
+        "size": "38",
+        "stock": 100,
+        "sku": "STAN02"
+      },
+      {
+        "size": "39",
+        "stock": 100,
+        "sku": "STAN03"
+      },
+      {
+        "size": "40",
+        "stock": 100,
+        "sku": "STAN04"
+      },
+      {
+        "size": "41",
+        "stock": 100,
+        "sku": "STAN05"
+      },
+      {
+        "size": "42",
+        "stock": 100,
+        "sku": "STAN06"
+      }
+    ]
+  },
+  {
+    "title": "Nike Wmns Air Jordan 1 Low ‘White Wolf Grey’ DC0774-105",
+    "price": 138.0,
+    "description": "The Nike Air Jordan 1 Low may be the “hot” shoe at the moment when it is widely promoted by many celebrities, especially famous rappers such as Travis Scott, Drake, etc. Just a few months before the summer, Jordan launched some of the most beautiful colors of the year and it shows no signs of cooling down as it is constantly sold out. And especially Nike has joined hands with Dior to create one of the most anticipated masterpieces in 2020.",
+    "brandId": 2,
+    "categoryId": 1,
+    "variants": [
+      {
+        "size": "37",
+        "stock": 100,
+        "sku": "NWAJ1WWG01"
+      },
+      {
+        "size": "38",
+        "stock": 100,
+        "sku": "NWAJ1WWG02"
+      },
+      {
+        "size": "39",
+        "stock": 100,
+        "sku": "NWAJ1WWG03"
+      },
+      {
+        "size": "40",
+        "stock": 100,
+        "sku": "NWAJ1WWG04"
+      },
+      {
+        "size": "41",
+        "stock": 100,
+        "sku": "NWAJ1WWG05"
+      },
+      {
+        "size": "42",
+        "stock": 100,
+        "sku": "NWAJ1WWG06"
+      }
+    ]
+  },
+  {
+    "title": "Adidas Forum Low ‘Core Black’ IG5513",
+    "price": 154.0,
+    "description": "Buy 100% authentic Adidas Forum Low 'Core Black' IG5513 Shoes. Free 1-day shipping. Guaranteed to pay X5 if found Fake. Free size exchange. FREE lifetime shoe cleaning. BUY NOW!",
+    "brandId": 1,
+    "categoryId": 1,
+    "variants": [
+      {
+        "size": "37",
+        "stock": 100,
+        "sku": "AFLCB01"
+      },
+      {
+        "size": "38",
+        "stock": 100,
+        "sku": "AFLCB02"
+      },
+      {
+        "size": "39",
+        "stock": 100,
+        "sku": "AFLCB03"
+      },
+      {
+        "size": "40",
+        "stock": 100,
+        "sku": "AFLCB04"
+      },
+      {
+        "size": "41",
+        "stock": 100,
+        "sku": "AFLCB05"
+      },
+      {
+        "size": "42",
+        "stock": 100,
+        "sku": "AFLCB06"
+      }
+    ]
+  },
+  {
+    "title": "Adidas Superstar OG ‘Vintage White’ C77124",
+    "price": 98.0,
+    "description": "From its humble origins as a basketball shoe to its current status as a global streetwear staple, the Superstar is arguably the most iconic sneaker design of all time – with a history that belies its simplicity. After a heyday in professional basketball in the 1970s, the shoe’s golden era came in the 80s, when it appeared at the height of streetwear and hip-hop.",
+    "brandId": 1,
+    "categoryId": 1,
+    "variants": [
+      {
+        "size": "37",
+        "stock": 100,
+        "sku": "ASOGVW01"
+      },
+      {
+        "size": "38",
+        "stock": 100,
+        "sku": "ASOGVW02"
+      },
+      {
+        "size": "39",
+        "stock": 100,
+        "sku": "ASOGVW03"
+      },
+      {
+        "size": "40",
+        "stock": 100,
+        "sku": "ASOGVW04"
+      },
+      {
+        "size": "41",
+        "stock": 100,
+        "sku": "ASOGVW05"
+      },
+      {
+        "size": "42",
+        "stock": 100,
+        "sku": "ASOGVW06"
+      }
+    ]
+  },
+  {
+    "title": "Nike Air Jordan 1 Low ‘Paris’ CV3043-100",
+    "price": 153.0,
+    "description": "The Air Jordan 1 Low “Paris” is a new take on the legendary Air Jordan 1 silhouette that has been a cult classic with footwear fans since 1985. As Michael Jordan’s first signature sneaker, the AJ1 has huge sentimental value and originally launched in high, mid, and low versions, with all three versions being popular today.",
+    "brandId": 2,
+    "categoryId": 1,
+    "variants": [
+      {
+        "size": "37",
+        "stock": 100,
+        "sku": "NAJ1LP01"
+      },
+      {
+        "size": "38",
+        "stock": 100,
+        "sku": "NAJ1LP02"
+      },
+      {
+        "size": "39",
+        "stock": 100,
+        "sku": "NAJ1LP03"
+      },
+      {
+        "size": "40",
+        "stock": 100,
+        "sku": "NAJ1LP04"
+      },
+      {
+        "size": "41",
+        "stock": 100,
+        "sku": "NAJ1LP05"
+      },
+      {
+        "size": "42",
+        "stock": 100,
+        "sku": "NAJ1LP06"
+      }
+    ]
+  },
+  {
+    "title": "Adidas Wmns Samba OG ‘Cloud White’ IH2751",
+    "price": 138.0,
+    "description": "The dark gum contrast to the bright Wonder Quartz doesn’t distract from the classic Samba OG design. The upper is made entirely of smooth leather, giving the shoe a premium feel. The base is Cloud White, but Wonder Quartz on the serrated 3-Stripes. Both the heel tab and the T-molded toebox are a light dark tone that matches the other colors. Additionally, the branding features a trefoil and the word “adidas”. The Samba OG Wonder Quartz (Women) originally released on May 1, 2024.",
+    "brandId": 1,
+    "categoryId": 1,
+    "variants": [
+      {
+        "size": "37",
+        "stock": 100,
+        "sku": "ASOGCW01"
+      },
+      {
+        "size": "38",
+        "stock": 100,
+        "sku": "ASOGCW02"
+      },
+      {
+        "size": "39",
+        "stock": 0,
+        "sku": "ASOGCW03"
+      },
+      {
+        "size": "40",
+        "stock": 100,
+        "sku": "ASOGCW04"
+      },
+      {
+        "size": "41",
+        "stock": 100,
+        "sku": "ASOGCW05"
+      },
+      {
+        "size": "42",
+        "stock": 100,
+        "sku": "ASOGCW06"
+      }
+    ]
+  },
+  {
+    "title": "Nike Air Force 1 ’07 ‘White’ 315122-111",
+    "price": 110.0,
+    "description": "The Air Force 1 is arguably Nike’s most iconic shoe line, with its signature colorway proudly appearing on many Nike shoes being white. The Nike Air Force 1 07 White is a prime example of this. This AF1 takes some of Nike’s classic features and combines them with a simple and sophisticated design that still makes you look bold and confident.",
+    "brandId": 2,
+    "categoryId": 1,
+    "variants": [
+      {
+        "size": "37",
+        "stock": 100,
+        "sku": "NAF1W01"
+      },
+      {
+        "size": "38",
+        "stock": 100,
+        "sku": "NAF1W02"
+      },
+      {
+        "size": "39",
+        "stock": 200,
+        "sku": "NAF1W03"
+      },
+      {
+        "size": "40",
+        "stock": 0,
+        "sku": "NAF1W04"
+      },
+      {
+        "size": "41",
+        "stock": 100,
+        "sku": "NAF1W05"
+      },
+      {
+        "size": "42",
+        "stock": 100,
+        "sku": "NAF1W06"
+      }
+    ]
+  },
+  {
+    "title": "Nike Dunk Low ‘Black White’ DD1391-100",
+    "price": 118.0,
+    "description": "Product Description: From the Colors College program to Nike's vibrant CO.JP series, the Nike Dunk has seen many colorways since the design debuted in 1985. But with each new colorway, the Dunk has retained its traditional color-blocking to some extent. Nike has applied its traditional color-blocking to the Nike Dunk Low Retro White Black.",
+    "brandId": 2,
+    "categoryId": 1,
+    "variants": [
+      {
+        "size": "37",
+        "stock": 100,
+        "sku": "NDLBW01"
+      },
+      {
+        "size": "38",
+        "stock": 100,
+        "sku": "NDLBW02"
+      },
+      {
+        "size": "39",
+        "stock": 200,
+        "sku": "NDLBW03"
+      },
+      {
+        "size": "40",
+        "stock": 100,
+        "sku": "NDLBW04"
+      },
+      {
+        "size": "41",
+        "stock": 100,
+        "sku": "NDLBW05"
+      },
+      {
+        "size": "42",
+        "stock": 100,
+        "sku": "NDLBW06"
+      }
+    ]
+  },
+  {
+    "title": "Adidas AdiFOM Superstar ‘Core White’ HQ8750",
+    "price": 74.0,
+    "description": "Buy 100% genuine Adidas AdiFOM Superstar 'Core White' HQ8750 Shoes. Free 1-day delivery. Commitment to refund X5 if detected Fake. Free size exchange. FREE lifetime shoe cleaning. BUY NOW!",
+    "brandId": 1,
+    "categoryId": 1,
+    "variants": [
+      {
+        "size": "37",
+        "stock": 100,
+        "sku": "AASCW01"
+      },
+      {
+        "size": "38",
+        "stock": 100,
+        "sku": "AASCW02"
+      },
+      {
+        "size": "39",
+        "stock": 200,
+        "sku": "AASCW03"
+      },
+      {
+        "size": "40",
+        "stock": 100,
+        "sku": "AASCW04"
+      },
+      {
+        "size": "41",
+        "stock": 100,
+        "sku": "AASCW05"
+      },
+      {
+        "size": "42",
+        "stock": 100,
+        "sku": "AASCW06"
+      }
+    ]
+  }
+]
