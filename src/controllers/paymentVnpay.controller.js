@@ -77,6 +77,12 @@ const createPayment = async (req, res) => {
         paymentGateway,
       });
 
+      const cart = await db.Cart.findOne({ where: { id: cartId } });
+      if (cart) {
+        cart.state = "shipping"; // hoặc `processing`
+        await cart.save();
+      }
+
       return res.status(200).json({
         success: true,
         message: "Payment created successfully",
@@ -190,16 +196,19 @@ const callBack = async (req, res) => {
       if (dataJson.zp_trans_id) {
         const { app_trans_id, amount, user_id, payment_gateway } = dataJson;
 
-        console.log(app_trans_id);
-
         const payment = await db.Payment.findOne({
           where: { transactionId: app_trans_id },
         });
 
         if (payment) {
-          payment.paymentStatus = "Success";
+          payment.paymentStatus = "Shipping";
           payment.paymentDate = new Date();
           await payment.save();
+
+          if (cart) {
+            cart.state = "completed";
+            await cart.save(); // Cập nhật trạng thái giỏ hàng
+          }
         }
 
         result.return_code = 1;
@@ -207,6 +216,15 @@ const callBack = async (req, res) => {
       } else {
         result.return_code = 0;
         result.return_message = "Payment failed";
+
+        // Cập nhật trạng thái thanh toán thất bại
+        const payment = await db.Payment.findOne({
+          where: { transactionId: app_trans_id },
+        });
+        if (payment) {
+          payment.paymentStatus = "Failed";
+          await payment.save();
+        }
       }
     }
 
@@ -220,4 +238,284 @@ const callBack = async (req, res) => {
   }
 };
 
-module.exports = { createPayment, callBack };
+const getAllOrders = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status } = req.query;
+    const offset = (page - 1) * limit;
+
+    const whereCondition = { userId: req.user.id };
+    if (status) {
+      whereCondition.paymentStatus = status; // Lọc theo trạng thái
+    }
+
+    const orders = await db.Payment.findAndCountAll({
+      where: whereCondition,
+      include: {
+        model: db.Cart,
+        as: "cart",
+      },
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [["paymentDate", "DESC"]], // Sắp xếp theo ngày gần nhất
+    });
+
+    return res.status(200).json({
+      success: true,
+      orders: orders.rows,
+      totalOrders: orders.count,
+      totalPages: Math.ceil(orders.count / limit),
+      currentPage: parseInt(page),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+const getDetailOrder = async (req, res) => {
+  try {
+    const { oid } = req.params;
+
+    const order = await db.Payment.findOne({
+      where: { id: oid, userId: req.user.id }, // Kiểm tra quyền
+      include: {
+        model: db.Cart,
+        as: "cart",
+        include: {
+          model: db.CartItem, // Bao gồm sản phẩm trong giỏ
+          as: "items",
+        },
+      },
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found or unauthorized access",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      order,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+const getAllOrdersForAdmin = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status, userId } = req.query;
+    const offset = (page - 1) * limit;
+
+    // xây dựng điều kiện tìm kiếm
+    const whereCondition = {};
+    if (status) {
+      whereCondition.paymentStatus = status;
+    }
+    if (userId) {
+      whereCondition.userId = userId;
+    }
+
+    const orders = await db.Payment.findAndCountAll({
+      where: whereCondition,
+      include: {
+        model: db.Cart,
+        as: "cart",
+        include: {
+          model: db.CartItem, // Bao gồm sản phẩm trong giỏ hàng
+          as: "items",
+        },
+      },
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [["paymentDate", "DESC"]],
+    });
+    return res.status(200).json({
+      success: true,
+      orders: orders.rows,
+      totalOrders: orders.count,
+      totalPages: Math.ceil(orders.count / limit),
+      currentPage: parseInt(page),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+const updateOrderStatus = async (req, res) => {
+  try {
+    const { oid } = req.params;
+
+    const payment = await db.Payment.findByPk(oid);
+
+    if (!payment || payment.paymentMethod !== "Cash") {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found or invalid payment method",
+      });
+    }
+
+    if (payment.paymentStatus === "Delivered") {
+      return res.status(400).json({
+        success: false,
+        message: "Order is already marked as delivered",
+      });
+    }
+
+    // Cập nhật trạng thái thành `Delivered`
+    payment.paymentStatus = "Delivered";
+    payment.paymentDate = new Date(); // Ghi nhận ngày thanh toán thực tế
+    await payment.save();
+
+    const cart = await db.Cart.findOne({ where: { id: payment.cartId } });
+    if (cart) {
+      cart.state = "completed"; // Đơn hàng đã hoàn tất
+      await cart.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Order status updated to Delivered",
+      payment,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+const markOrderAsReceived = async (req, res) => {
+  try {
+    const { oid } = req.params;
+    const order = await db.Payment.findOne({
+      where: { id: oid, userId: req.user.id },
+    });
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found or unauthorized access",
+      });
+    }
+    if (order.paymentStatus !== "Shipping") {
+      return res.status(400).json({
+        success: false,
+        message: "Order cannot be marked as received in its current state",
+      });
+    }
+    order.paymentStatus = "Received"; // Cập nhật trạng thái
+    order.receivedDate = new Date(); // Thêm ngày nhận (nếu cần)
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Order marked as received successfully",
+      order,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+const cancelOrder = async (req, res) => {
+  try {
+    const { oid } = req.params;
+
+    const payment = await db.Payment.findByPk(oid);
+
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: "Payment not found",
+      });
+    }
+
+    if (payment.state !== "pending") {
+      return res.status(400).json({
+        success: false,
+        message: "Order cannot be canceled at this stage",
+      });
+    }
+
+    // Kiểm tra phương thức thanh toán
+    if (payment.paymentMethod === "zalopay") {
+      // Gọi API hoàn tiền từ ZaloPay
+      const refundResponse = await zalopayRefund(
+        payment.transactionId,
+        payment.totalPrice
+      );
+
+      if (refundResponse.return_code !== 1) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to process refund. Please contact support.",
+        });
+      }
+    }
+
+    // Cập nhật trạng thái đơn hàng
+    payment.state = "canceled";
+    await payment.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Order has been canceled",
+      order: payment,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+const zalopayRefund = async (transactionId, refundAmount) => {
+  try {
+    const response = await axios.post(
+      "https://sandbox.zalopay.vn/v001/refund",
+      {
+        app_id: config.app_id,
+        app_key: config.key1,
+        transaction_id: transactionId,
+        refund_amount: refundAmount,
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("ZaloPay Refund Error:", error.message);
+    return { success: false };
+  }
+};
+
+module.exports = {
+  createPayment,
+  callBack,
+  getAllOrders,
+  getDetailOrder,
+  getAllOrdersForAdmin,
+  updateOrderStatus,
+  markOrderAsReceived,
+  cancelOrder,
+};
