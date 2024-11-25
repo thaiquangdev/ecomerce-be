@@ -99,22 +99,49 @@ const getAllCarts = async (req, res) => {
     });
   }
 };
+
 const updateQuantity = async (req, res) => {
   try {
     const { quantity } = req.body;
-    const { cid } = req.params;
-    const cart = await db.CartDetail.findOne({ cartId: cid });
-    if (cart) {
+    const { cdid } = req.params;
+    const { id: userId } = req.user;
+
+    // Kiểm tra nếu quantity không hợp lệ
+    if (!quantity || quantity <= 0) {
       return res.status(400).json({
         success: false,
-        message: "Cart is not found",
+        message: "Quantity must be greater than 0",
       });
     }
+
+    // Tìm CartDetail thuộc người dùng hiện tại
+    const cart = await db.CartDetail.findOne({
+      where: { id: cdid },
+      include: [
+        {
+          model: db.Cart,
+          as: "cart",
+          where: { userId }, // Liên kết với bảng Cart để kiểm tra userId
+        },
+      ],
+    });
+
+    // Nếu không tìm thấy giỏ hàng
+    if (!cart) {
+      return res.status(404).json({
+        success: false,
+        message: "Cart item not found",
+      });
+    }
+
+    // Cập nhật quantity
     cart.quantity = quantity;
     await cart.save();
+
     return res.status(200).json({
-      succees: true,
+      success: true,
       message: "Update quantity is successful",
+      cart, // Trả về thông tin giỏ hàng đã cập nhật
     });
   } catch (error) {
     return res.status(500).json({
@@ -129,7 +156,7 @@ const deleteCart = async (req, res) => {
   try {
     const { cid } = req.params;
     const cart = await db.Cart.findByPk(cid);
-    if (cart) {
+    if (!cart) {
       return res.status(400).json({
         success: false,
         message: "Cart is not found",
@@ -153,13 +180,23 @@ const deleteCartDetail = async (req, res) => {
   try {
     const { cartId, productId } = req.params; // Lấy cartId và productId từ URL params
 
-    // Xóa sản phẩm cụ thể khỏi giỏ hàng
-    await db.CartDetail.destroy({
+    // Kiểm tra xem bản ghi có tồn tại không
+    const cartDetail = await db.CartDetail.findOne({
       where: {
-        cartId: cartId,
+        id: cartId,
         productId: productId,
       },
     });
+
+    if (!cartDetail) {
+      return res.status(404).json({
+        success: false,
+        message: "Cart detail not found",
+      });
+    }
+
+    // Xóa bản ghi
+    await cartDetail.destroy();
 
     return res.status(200).json({
       success: true,
