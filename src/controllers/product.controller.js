@@ -323,8 +323,9 @@ const updateProduct = async (req, res) => {
 
 const deleteProduct = async (req, res) => {
   try {
-    const { pid } = req.params;
-    const product = await db.Product.findByPk(pid, {
+    const { slug } = req.params;
+    const product = await db.Product.findOne({
+      where: { slug },
       include: [
         {
           model: db.ProductImage,

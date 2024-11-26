@@ -26,6 +26,6 @@ router.put(
   upload.array("images", 4),
   updateProduct
 );
-router.delete("/delete-product/:pid", protect, deleteProduct);
+router.delete("/delete-product/:slug", protect, deleteProduct);
 
 module.exports = router;

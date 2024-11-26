@@ -38,15 +38,25 @@ const createBrand = async (req, res) => {
 
 const getBrands = async (req, res) => {
   try {
+    const limit = parseInt(req.query.limit) || 8;
+    const page = parseInt(req.query.page) || 1;
+    const offset = (page - 1) * limit;
     const brands = await db.Brand.findAll({
       include: {
         model: db.Product,
         as: "products",
       },
+      limit,
+      offset,
     });
+    const totalBrands = await db.Brand.count();
     return res.status(200).json({
       success: true,
       brands,
+      totalBrands,
+      limit,
+      page,
+      offset,
     });
   } catch (error) {
     return res.status(500).json({
@@ -59,8 +69,9 @@ const getBrands = async (req, res) => {
 
 const getBrand = async (req, res) => {
   try {
-    const { bid } = req.params;
-    const brand = await db.Brand.findByPk(bid, {
+    const { slug } = req.params;
+    const brand = await db.Brand.findOne({
+      where: { brandSlug: slug },
       include: {
         model: db.Product,
         as: "products",
@@ -87,7 +98,8 @@ const getBrand = async (req, res) => {
 
 const updateBrand = async (req, res) => {
   try {
-    const { bid } = req.params;
+    const { slug } = req.params;
+
     const { brandName } = req.body;
     if (!brandName) {
       return res.status(400).json({
@@ -95,13 +107,9 @@ const updateBrand = async (req, res) => {
         message: "Brand name is require",
       });
     }
-    const brand = await db.Brand.findByPk(bid);
-    if (!brand) {
-      return res.status(404).json({
-        success: false,
-        message: "Brand is not found",
-      });
-    }
+    const brand = await db.Brand.findOne({
+      where: { brandSlug: slug },
+    });
     const brandSlug = slugify(brandName);
     brand.brandName = brandName;
     brand.brandSlug = brandSlug;
@@ -124,8 +132,10 @@ const updateBrand = async (req, res) => {
 
 const deleteBrand = async (req, res) => {
   try {
-    const { bid } = req.params;
-    const brand = await db.Brand.findByPk(bid);
+    const { slug } = req.params;
+    const brand = await db.Brand.findOne({
+      where: { brandSlug: slug },
+    });
     if (!brand) {
       return res.status(404).json({
         success: false,

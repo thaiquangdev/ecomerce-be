@@ -64,8 +64,9 @@ const getCategories = async (req, res) => {
 
 const getCategory = async (req, res) => {
   try {
-    const { cid } = req.params;
-    const category = await db.Category.findByPk(cid, {
+    const { slug } = req.params;
+    const category = await db.Category.findOne({
+      where: { categorySlug: slug },
       include: {
         model: db.Product,
         as: "products",
@@ -92,7 +93,7 @@ const getCategory = async (req, res) => {
 
 const updateCategory = async (req, res) => {
   try {
-    const { cid } = req.params;
+    const { slug } = req.params;
     const { categoryName } = req.body;
     if (!categoryName) {
       return res.status(400).json({
@@ -100,11 +101,8 @@ const updateCategory = async (req, res) => {
         message: "Category name is require",
       });
     }
-    const category = await db.Category.findByPk(cid, {
-      include: {
-        model: db.Product,
-        as: "products",
-      },
+    const category = await db.Category.findOne({
+      where: { categorySlug: slug },
     });
     if (!category) {
       return res.status(404).json({
@@ -132,12 +130,9 @@ const updateCategory = async (req, res) => {
 
 const deleteCategory = async (req, res) => {
   try {
-    const { cid } = req.params;
-    const category = await db.Category.findByPk(cid, {
-      include: {
-        model: db.Product,
-        as: "products",
-      },
+    const { slug } = req.params;
+    const category = await db.Category.findOne({
+      where: { categorySlug: slug },
     });
     if (!category) {
       return res.status(404).json({
