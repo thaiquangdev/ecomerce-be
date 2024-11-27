@@ -66,6 +66,68 @@ const getUser = async (req, res) => {
   }
 };
 
+const getUsers = async (req, res) => {
+  try {
+    const { name } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 8;
+    const offset = (page - 1) * limit;
+
+    const whereCondition = { roleId: 2 };
+    if (name) {
+      whereCondition.fullName = { [db.Sequelize.Op.like]: `%${name}%` };
+    }
+
+    // Sử dụng findAndCountAll để kết hợp findAll và count
+    const { rows: users, count: totalUsers } = await db.User.findAndCountAll({
+      where: whereCondition,
+      limit,
+      offset,
+    });
+
+    return res.status(200).json({
+      success: true,
+      users,
+      totalUsers,
+      currentPage: page,
+      limit,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+const getUserById = async (req, res) => {
+  try {
+    const user = await db.User.findByPk(req.params.uid, {
+      include: {
+        model: db.address,
+        as: "address",
+      },
+    });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User is not found",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      mesage: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -153,4 +215,11 @@ const resetPassword = async (req, res) => {
   }
 };
 
-module.exports = { changePassword, getUser, forgotPassword, resetPassword };
+module.exports = {
+  changePassword,
+  getUser,
+  getUsers,
+  getUserById,
+  forgotPassword,
+  resetPassword,
+};

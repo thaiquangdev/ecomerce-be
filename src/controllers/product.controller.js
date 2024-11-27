@@ -85,6 +85,7 @@ const createProduct = async (req, res) => {
 
 const getProducts = async (req, res) => {
   try {
+    const { name } = req.query;
     const limit = parseInt(req.query.limit) || 8;
     const page = parseInt(req.query.page) || 1;
     const offset = (page - 1) * limit;
@@ -111,7 +112,16 @@ const getProducts = async (req, res) => {
         order = [["id", "ASC"]];
         break;
     }
+
+    // tạo câu lệnh where
+    const whereCondition = {};
+
+    if (name) {
+      whereCondition.title = { [db.Sequelize.Op.like]: `%${name}%` };
+    }
+
     const products = await db.Product.findAll({
+      where: whereCondition,
       include: [
         {
           model: db.ProductImage,
@@ -136,7 +146,7 @@ const getProducts = async (req, res) => {
       limit,
       offset,
     });
-    const totalProducts = await db.Product.count();
+    const totalProducts = await db.Product.count({ where: whereCondition });
     return res.status(200).json({
       success: true,
       products,
@@ -237,11 +247,11 @@ const updateProduct = async (req, res) => {
       discount,
       brandId,
       categoryId,
-      variants,
+      variants, // Dữ liệu variants gửi từ client
     } = req.body;
     const files = req.files;
 
-    // Tìm sản phẩm theo id
+    // Tìm sản phẩm theo ID
     const product = await db.Product.findByPk(pid, {
       include: [
         { model: db.ProductImage, as: "images" },
@@ -259,7 +269,7 @@ const updateProduct = async (req, res) => {
     // Cập nhật thông tin sản phẩm
     const slug = title ? slugify(title) : product.slug;
     await product.update({
-      title: title || product.title, // Cập nhật title nếu có
+      title: title || product.title,
       slug,
       description: description || product.description,
       price: price || product.price,
@@ -268,18 +278,30 @@ const updateProduct = async (req, res) => {
       categoryId: categoryId || product.categoryId,
     });
 
-    // Xử lý variants: Nếu có, cập nhật lại
+    // Xử lý cập nhật hoặc thêm mới variants
     if (variants) {
       const parsedVariants = JSON.parse(variants);
-      await db.ProductVariant.destroy({ where: { productId: pid } });
 
       for (const item of parsedVariants) {
-        await db.ProductVariant.create({
-          size: item.size,
-          stock: item.stock,
-          sku: item.sku,
-          productId: pid,
-        });
+        if (item.id) {
+          // Nếu variant có ID, cập nhật
+          const existingVariant = await db.ProductVariant.findByPk(item.id);
+          if (existingVariant) {
+            await existingVariant.update({
+              size: item.size || existingVariant.size,
+              stock: item.stock || existingVariant.stock,
+              sku: item.sku || existingVariant.sku,
+            });
+          }
+        } else {
+          // Nếu không có ID, thêm mới
+          await db.ProductVariant.create({
+            size: item.size,
+            stock: item.stock,
+            sku: item.sku,
+            productId: pid,
+          });
+        }
       }
     }
 

@@ -38,10 +38,21 @@ const createBrand = async (req, res) => {
 
 const getBrands = async (req, res) => {
   try {
+    const { name } = req.query;
     const limit = parseInt(req.query.limit) || 8;
     const page = parseInt(req.query.page) || 1;
     const offset = (page - 1) * limit;
+
+    // Tạo điều kiện where
+    const whereCondition = {};
+    if (name) {
+      // Sử dụng LIKE để tìm kiếm theo từ khóa gần đúng
+      whereCondition.brandName = { [db.Sequelize.Op.like]: `%${name}%` };
+    }
+
+    // Truy vấn danh sách brands
     const brands = await db.Brand.findAll({
+      where: whereCondition,
       include: {
         model: db.Product,
         as: "products",
@@ -49,7 +60,13 @@ const getBrands = async (req, res) => {
       limit,
       offset,
     });
-    const totalBrands = await db.Brand.count();
+
+    // Tính tổng số brands
+    const totalBrands = await db.Brand.count({
+      where: whereCondition,
+    });
+
+    // Trả về kết quả
     return res.status(200).json({
       success: true,
       brands,
@@ -59,6 +76,7 @@ const getBrands = async (req, res) => {
       offset,
     });
   } catch (error) {
+    // Xử lý lỗi
     return res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -66,7 +84,6 @@ const getBrands = async (req, res) => {
     });
   }
 };
-
 const getBrand = async (req, res) => {
   try {
     const { slug } = req.params;

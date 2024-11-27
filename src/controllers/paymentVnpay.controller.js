@@ -63,6 +63,13 @@ const createPayment = async (req, res) => {
       }
     }
 
+    const existPayment = await db.Payment.findOne({
+      where: { cartId, paymentStatus: "pending", paymentMethod: "ZaloPay" },
+    });
+    if (existPayment) {
+      await existPayment.destroy();
+    }
+
     // Nếu là thanh toán tiền mặt, chỉ cần tạo payment mới và trạng thái là "Pending"
     if (paymentGateway === "cash") {
       const newPayment = await db.Payment.create({
@@ -77,10 +84,39 @@ const createPayment = async (req, res) => {
         paymentGateway,
       });
 
-      const cart = await db.Cart.findOne({ where: { id: cartId } });
+      const cart = await db.Cart.findOne({
+        where: { id: cartId },
+        transaction,
+      });
       if (cart) {
         cart.state = "shipping"; // hoặc `processing`
         await cart.save();
+      }
+
+      const cartDetails = await db.cartDetail.findAll({
+        where: { cartId },
+      });
+
+      for (const item of cartDetails) {
+        const variant = await db.ProductVariant.findOne({
+          where: { productId: item.productId, size: item.size },
+        });
+
+        if (!variant) {
+          throw new Error(
+            `Product variant with ID ${item.productId} not found`
+          );
+        }
+
+        // Kiểm tra stock
+        if (variant.stock < item.quantity) {
+          throw new Error(
+            `Insufficient stock for variant (Size: ${variant.size})`
+          );
+        }
+        variant.stock -= item.quantity;
+        variant.sold += item.quantity;
+        await variant.save();
       }
 
       return res.status(200).json({
@@ -108,7 +144,7 @@ const createPayment = async (req, res) => {
       amount: amount * 22000, // Chuyển đổi USD sang VND nếu cần
       description: `Payment for order #${transID}`,
       bank_code: paymentGateway,
-      callback_url: "https://9f98-171-238-153-195.ngrok-free.app/callback",
+      callback_url: "https://e24f-116-105-20-73.ngrok-free.app/callback",
     };
 
     const data =
@@ -189,7 +225,7 @@ const callBack = async (req, res) => {
       result.return_code = -1;
       result.return_message = "mac not equal";
     } else {
-      let dataJson = JSON.parse(dataStr, config.key2);
+      let dataJson = JSON.parse(dataStr); // Sửa lại phần này
 
       console.log(dataJson);
 
@@ -200,15 +236,71 @@ const callBack = async (req, res) => {
           where: { transactionId: app_trans_id },
         });
 
-        if (payment) {
-          payment.paymentStatus = "Shipping";
-          payment.paymentDate = new Date();
-          await payment.save();
+        if (!payment) {
+          result.return_code = 0;
+          result.return_message = "Payment not found";
+          return res.json(result); // Nếu không tìm thấy payment thì trả về
+        }
 
-          if (cart) {
-            cart.state = "completed";
-            await cart.save(); // Cập nhật trạng thái giỏ hàng
+        payment.paymentStatus = "Shipping";
+        payment.paymentDate = new Date();
+        await payment.save();
+
+        const cart = await db.Cart.findByPk(payment.cartId);
+        if (!cart) {
+          result.return_code = 0;
+          result.return_message = "Cart not found";
+          return res.json(result); // Nếu không tìm thấy cart thì trả về
+        }
+
+        cart.state = "completed";
+        await cart.save(); // Cập nhật trạng thái giỏ hàng
+
+        const cartDetails = await db.CartDetail.findAll({
+          where: { cartId: cart.id },
+        });
+
+        console.log("Cart details:", cartDetails);
+
+        if (!cartDetails || cartDetails.length === 0) {
+          throw new Error("No cart details found");
+        }
+
+        for (const item of cartDetails) {
+          console.log(
+            `Processing item ${item.productId} with size ${item.size}`
+          );
+
+          const variant = await db.ProductVariant.findOne({
+            where: { productId: item.productId, size: item.size },
+          });
+
+          if (!variant) {
+            throw new Error(
+              `Variant not found for product ${item.productId} with size ${item.size}`
+            );
           }
+
+          // Log the current stock and sold values before updating
+          console.log(`Current stock: ${variant.stock}, sold: ${variant.sold}`);
+
+          // Kiểm tra stock
+          if (variant.stock < item.quantity) {
+            throw new Error(
+              `Insufficient stock for variant (Size: ${variant.size})`
+            );
+          }
+
+          // Cập nhật stock và sold
+          variant.stock -= item.quantity;
+          variant.sold += item.quantity;
+
+          // Log after updating
+          console.log(
+            `Updated stock: ${variant.stock}, updated sold: ${variant.sold}`
+          );
+
+          await variant.save(); // Lưu lại variant
         }
 
         result.return_code = 1;
@@ -285,7 +377,7 @@ const getDetailOrder = async (req, res) => {
         model: db.Cart,
         as: "cart",
         include: {
-          model: db.CartItem, // Bao gồm sản phẩm trong giỏ
+          model: db.CartDetail, // Bao gồm sản phẩm trong giỏ
           as: "items",
         },
       },
@@ -314,9 +406,19 @@ const getDetailOrder = async (req, res) => {
 const getAllOrdersForAdmin = async (req, res) => {
   try {
     const { page = 1, limit = 10, status, userId } = req.query;
-    const offset = (page - 1) * limit;
 
-    // xây dựng điều kiện tìm kiếm
+    // Validate input
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+
+    if (isNaN(pageNum) || pageNum <= 0 || isNaN(limitNum) || limitNum <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid page or limit value",
+      });
+    }
+
+    // Build search condition
     const whereCondition = {};
     if (status) {
       whereCondition.paymentStatus = status;
@@ -325,28 +427,48 @@ const getAllOrdersForAdmin = async (req, res) => {
       whereCondition.userId = userId;
     }
 
+    // Query the database
     const orders = await db.Payment.findAndCountAll({
       where: whereCondition,
       include: {
         model: db.Cart,
         as: "cart",
         include: {
-          model: db.CartItem, // Bao gồm sản phẩm trong giỏ hàng
-          as: "items",
+          model: db.CartDetail,
+          as: "details",
+          attributes: ["id", "productId", "quantity", "price"], // Select only necessary fields
         },
+        attributes: ["id", "state"], // Select only necessary fields for Cart
       },
-      limit: parseInt(limit),
-      offset: parseInt(offset),
+      attributes: ["id", "amount", "paymentDate", "paymentStatus", "userId"], // Select only necessary fields for Payment
+      limit: limitNum,
+      offset: (pageNum - 1) * limitNum,
       order: [["paymentDate", "DESC"]],
     });
+
+    // Return response
     return res.status(200).json({
       success: true,
-      orders: orders.rows,
-      totalOrders: orders.count,
-      totalPages: Math.ceil(orders.count / limit),
-      currentPage: parseInt(page),
+      data: {
+        orders: orders.rows,
+        meta: {
+          totalOrders: orders.count,
+          totalPages: Math.ceil(orders.count / limitNum),
+          currentPage: pageNum,
+          limit: limitNum,
+        },
+      },
     });
   } catch (error) {
+    // Handle errors
+    if (error.name === "SequelizeDatabaseError") {
+      return res.status(400).json({
+        success: false,
+        message: "Database query error",
+        error: error.message,
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: "Internal server error",

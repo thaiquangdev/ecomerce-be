@@ -43,19 +43,42 @@ const createCategory = async (req, res) => {
 
 const getCategories = async (req, res) => {
   try {
+    const { name } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 8;
+    const offset = (page - 1) * limit;
+
+    // tạo điều kiện where
+    const whereCondition = {};
+
+    if (name) {
+      // sử dụng like để tìm kiểm theo từ khóa gần đúng
+      whereCondition.categoryName = { [db.Sequelize.Op.like]: `%${name}%` };
+    }
+
     const categories = await db.Category.findAll({
+      where: whereCondition,
       include: {
         model: db.Product,
         as: "products",
       },
+      limit,
+      offset,
+    });
+    const totalCategories = await db.Category.count({
+      where: whereCondition,
     });
     return res.status(200).json({
       success: true,
       categories,
+      limit,
+      page,
+      offset,
+      totalCategories,
     });
   } catch (error) {
     return res.status(500).json({
-      succes: false,
+      success: false,
       message: "Internal server error",
       error: error.message,
     });
